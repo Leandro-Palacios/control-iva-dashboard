@@ -84,6 +84,10 @@ tr:last-child td{border-bottom:none}
 .login input{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
 .login button,.ghost{font:inherit;padding:10px 12px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--card);cursor:pointer;font-weight:600}
 .ghost{background:transparent;color:var(--accent);padding:6px 12px;font-weight:500}
+.refresh{font:inherit;font-size:14px;font-weight:600;padding:6px 14px;border-radius:999px;border:1px solid var(--accent);background:transparent;color:var(--accent);cursor:pointer}
+.refresh:hover{background:var(--accent);color:var(--card)}
+.refresh:disabled{opacity:.6;cursor:wait}
+.refresh:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .err{color:var(--bad);font-size:14px;min-height:1.2em;margin:0}
 .state{color:var(--muted);text-align:center;padding:40px 0}
 </style>
@@ -102,7 +106,7 @@ tr:last-child td{border-bottom:none}
     <h1>Control del grupo Nuñez</h1>
     <p class="sub" id="sub">Cargando…</p>
   </div>
-  <div class="months" role="group" aria-label="Mes" id="months"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><div class="months" role="group" aria-label="Mes" id="months"></div><button type="button" class="refresh" id="actualizar" aria-label="Actualizar datos">↻ Actualizar</button></div>
 </header>
 <main id="main" style="display:grid;gap:18px"><p class="state">Cargando datos…</p></main>
 <p class="foot">Fuentes: ARCA (Mis Comprobantes) y Mercado Pago (liquidaciones), cargadas por n8n en la planilla del mes. La proyección es lineal: lo acumulado ÷ días transcurridos × días del mes. <button type="button" class="ghost" id="salir">Salir</button></p>
@@ -116,7 +120,7 @@ const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},se
 const nf=(v,d=2)=>Math.abs(v).toLocaleString("es-AR",{minimumFractionDigits:d,maximumFractionDigits:d});
 const fmtM=v=>(v<0?"−":"")+"$"+nf(v)+" M";
 const posTxt=v=>v<0?`${fmtM(-v)} a favor`:`${fmtM(v)} a pagar`;
-let clave=store.get("clave"), demo=location.hash==="#demo";
+let clave=store.get("clave"), demo=location.hash==="#demo", mesActual=null;
 
 function chart(s,D){
  const W=300,H=150,x0=46,x1=292,y0=12,y1=124,n=Math.max(s.serie.length,1),c=COL[s.id];
@@ -139,6 +143,7 @@ function chart(s,D){
  </svg></div>`;}
 
 function render(d){
+ mesActual=d.mes;
  const act=new Date(d.actualizado);
  document.getElementById("sub").innerHTML=`Planeta Bodegón · Fábrica Nuñez · Milaburo &nbsp;·&nbsp; ${d.mesNombre}, día ${d.dia} de ${d.diasMes} &nbsp;·&nbsp; actualizado ${act.toLocaleString("es-AR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}${demo?' &nbsp;<span class="tag">Datos de ejemplo</span>':""}`;
  document.getElementById("months").innerHTML=d.meses.map(m=>`<button type="button" data-mes="${m.id}" aria-pressed="${m.id===d.mes}">${m.nombre[0].toUpperCase()+m.nombre.slice(1)}</button>`).join("");
@@ -164,17 +169,22 @@ function render(d){
    <div class="tbl"><table><thead><tr><th>Sociedad</th><th>Cobrado</th><th>% de lo facturado</th><th>Comisión</th><th>Por acreditar</th><th>Cruce</th></tr></thead><tbody>${mp}</tbody></table></div></section>
  </div>`;
 }
-async function cargar(mes){
+async function cargar(mes,refrescar){
  if(demo){render(DEMO);return;}
  if(!clave){document.getElementById("login").classList.add("show");return;}
- document.getElementById("main").innerHTML='<p class="state">Cargando datos…</p>';
+ const btn=document.getElementById("actualizar");
+ if(refrescar){btn.disabled=true;btn.textContent="Actualizando…";}
+ else document.getElementById("main").innerHTML='<p class="state">Cargando datos…</p>';
  try{
   const r=await fetch(`${API}?clave=${encodeURIComponent(clave)}${mes?`&mes=${encodeURIComponent(mes)}`:""}`,{cache:"no-store"});
   const d=await r.json().catch(()=>({ok:false}));
   if(r.status===401||!d.ok){store.del("clave");clave=null;document.getElementById("login-err").textContent="La clave no es correcta. Probá de nuevo.";document.getElementById("login").classList.add("show");return;}
   document.getElementById("login").classList.remove("show"); render(d);
- }catch(e){document.getElementById("main").innerHTML='<p class="state">No se pudieron traer los datos. Revisá la conexión y recargá la página.</p>';}
+ }catch(e){if(!refrescar)document.getElementById("main").innerHTML='<p class="state">No se pudieron traer los datos. Revisá la conexión y tocá Actualizar.</p>';else alertaBreve("No se pudo actualizar. Probá de nuevo.");}
+ finally{btn.disabled=false;btn.textContent="↻ Actualizar";}
 }
+function alertaBreve(t){const s=document.getElementById("sub");const prev=s.innerHTML;s.innerHTML=`<span style="color:var(--bad)">${t}</span>`;setTimeout(()=>{s.innerHTML=prev;},3500);}
+document.getElementById("actualizar").addEventListener("click",()=>cargar(mesActual,true));
 document.getElementById("f-login").addEventListener("submit",e=>{e.preventDefault();clave=document.getElementById("clave").value.trim();store.set("clave",clave);document.getElementById("login-err").textContent="";cargar();});
 document.getElementById("salir").addEventListener("click",()=>{store.del("clave");clave=null;location.hash="";document.getElementById("login").classList.add("show");});
 cargar();
