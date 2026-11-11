@@ -63,8 +63,10 @@ th{font-size:12px;color:var(--muted);font-weight:500;text-align:right;padding:6p
 th:first-child,td:first-child{text-align:left}
 td{padding:9px 6px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
 tr:last-child td{border-bottom:none}
+td+td{white-space:nowrap}
 .up{color:var(--ok)} .down{color:var(--bad)}
 .tbl{overflow-x:auto}
+.wrap>*,#main>*,.split>*,.grid3>*,.charts>*{min-width:0}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
 .kpi{background:var(--bg);border-radius:8px;padding:10px 12px}
 .kpi .v{font-family:var(--display);font-size:26px;font-weight:600}
@@ -109,11 +111,11 @@ tr:last-child td{border-bottom:none}
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><div class="months" role="group" aria-label="Mes" id="months"></div><button type="button" class="refresh" id="actualizar" aria-label="Actualizar datos">↻ Actualizar</button></div>
 </header>
 <main id="main" style="display:grid;gap:18px"><p class="state">Cargando datos…</p></main>
-<p class="foot">Fuentes: ARCA (Mis Comprobantes) y Mercado Pago (liquidaciones), cargadas por n8n en la planilla del mes. La proyección es lineal: lo acumulado ÷ días transcurridos × días del mes. <button type="button" class="ghost" id="salir">Salir</button></p>
+<p class="foot">Fuentes: ARCA (Mis Comprobantes) y Mercado Pago (liquidaciones), cargadas por n8n en la planilla del mes; posnet Payway desde la planilla de la Financiera Nuñez. La proyección es lineal: lo acumulado ÷ días transcurridos × días del mes. <button type="button" class="ghost" id="salir">Salir</button></p>
 </div>
 <script>
 const API="https://n8n.srv1334126.hstgr.cloud/webhook/dash-iva";
-const DEMO={"ok": true, "mes": "2026-11", "mesNombre": "noviembre 2026", "dia": 9, "diasMes": 30, "actualizado": "2026-11-09T14:00:00.000Z", "meses": [{"id": "2026-11", "nombre": "noviembre 2026"}], "quien": "Demo", "sociedades": [{"id": "pb", "n": "Planeta Bodegón", "deb": 4.17, "cred": 5.33, "ret": 0, "hoy": -1.16, "proj": -3.87, "umb": 5, "estado": "OK", "ventas": 19.84, "compras": 30.26, "serie": [-0.6, -1.3, -1.9, -1.5, -1.1, -1.95, -1.6, -1.3, -1.16], "mp": {"cobrado": 18.32, "neto": 17.45, "pendiente": 10.37, "facturado": 24.01, "comisionPct": 1.5, "dias": 1, "revisar": true}}, {"id": "fn", "n": "Fábrica Nuñez", "deb": 1.85, "cred": 4.44, "ret": 0, "hoy": -2.59, "proj": -8.63, "umb": 5, "estado": "OK", "ventas": 8.83, "compras": 27.02, "serie": [-0.3, -0.8, -1.2, -1.6, -2.0, -2.3, -2.26, -2.45, -2.59], "mp": {"cobrado": 15.99, "neto": 15.09, "pendiente": 9.14, "facturado": 10.68, "comisionPct": 1.7, "dias": 6, "revisar": true}}, {"id": "mi", "n": "Milaburo", "deb": 1.87, "cred": 1.54, "ret": 0, "hoy": 0.33, "proj": 1.09, "umb": 5, "estado": "OK", "ventas": 8.91, "compras": 8.46, "serie": [0.05, -0.1, -0.2, -0.3, -0.26, -0.15, 0.05, 0.2, 0.33], "mp": {"cobrado": 5.76, "neto": 4.88, "pendiente": 9.78, "facturado": 10.78, "comisionPct": 4.1, "dias": 3, "revisar": true}}]};
+const DEMO={"ok": true, "mes": "2026-11", "mesNombre": "noviembre 2026", "dia": 9, "diasMes": 30, "actualizado": "2026-11-09T14:00:00.000Z", "meses": [{"id": "2026-11", "nombre": "noviembre 2026"}], "quien": "Demo", "sociedades": [{"id": "pb", "n": "Planeta Bodegón", "deb": 4.17, "cred": 5.33, "ret": 0, "hoy": -1.16, "proj": -3.87, "umb": 5, "estado": "OK", "ventas": 19.84, "compras": 30.26, "serie": [-0.6, -1.3, -1.9, -1.5, -1.1, -1.95, -1.6, -1.3, -1.16], "mp": {"cobrado": 18.32, "neto": 17.45, "pendiente": 10.37, "facturado": 24.01, "comisionPct": 1.5, "dias": 1, "revisar": true}}, {"id": "fn", "n": "Fábrica Nuñez", "deb": 1.85, "cred": 4.44, "ret": 0, "hoy": -2.59, "proj": -8.63, "umb": 5, "estado": "OK", "ventas": 8.83, "compras": 27.02, "serie": [-0.3, -0.8, -1.2, -1.6, -2.0, -2.3, -2.26, -2.45, -2.59], "mp": {"cobrado": 15.99, "neto": 15.09, "pendiente": 9.14, "facturado": 10.68, "comisionPct": 1.7, "dias": 6, "revisar": true}}, {"id": "mi", "n": "Milaburo", "deb": 1.87, "cred": 1.54, "ret": 0, "hoy": 0.33, "proj": 1.09, "umb": 5, "estado": "OK", "ventas": 8.91, "compras": 8.46, "serie": [0.05, -0.1, -0.2, -0.3, -0.26, -0.15, 0.05, 0.2, 0.33], "mp": {"cobrado": 5.76, "neto": 4.88, "pendiente": 9.78, "facturado": 10.78, "comisionPct": 4.1, "dias": 3, "revisar": true}}], "financiera": {"total": {"bruto": 21.05, "fee": 1.68, "neto": 19.36, "acreditado": 9.62, "pendiente": 9.74}, "locales": [{"n": "Bodegón Nuñez", "soc": "Planeta Bodegón", "id": "pb", "bruto": 9.92, "fee": 0.79, "neto": 9.12, "acreditado": 5.38, "pendiente": 3.74}, {"n": "Fábrica", "soc": "Fábrica Nuñez", "id": "fn", "bruto": 0, "fee": 0, "neto": 0, "acreditado": 0, "pendiente": 0}, {"n": "Parrilla Nuñez", "soc": "Fábrica Nuñez", "id": "fn", "bruto": 0, "fee": 0, "neto": 0, "acreditado": 0, "pendiente": 0}, {"n": "Cantina Nuñez", "soc": "Fábrica Nuñez", "id": "fn", "bruto": 4.9, "fee": 0.39, "neto": 4.51, "acreditado": 2.09, "pendiente": 2.42}, {"n": "Bodegón Nuñez Palermo", "soc": "Milaburo", "id": "mi", "bruto": 6.23, "fee": 0.5, "neto": 5.73, "acreditado": 2.16, "pendiente": 3.58}], "medios": [{"n": "Crédito", "bruto": 7.09, "fee": 0.57, "pendiente": 6.53}, {"n": "Débito", "bruto": 6.46, "fee": 0.52, "pendiente": 1.68}, {"n": "QR", "bruto": 7.49, "fee": 0.6, "pendiente": 1.53}], "proximos": [{"fecha": "11/11", "hoy": true, "total": 2.28}, {"fecha": "12/11", "hoy": false, "total": 1.72}, {"fecha": "13/11", "hoy": false, "total": 1.35}, {"fecha": "14/11", "hoy": false, "total": 0.15}], "margen": {"ingreso": 1.68, "payway": 0, "margen": 1.68}}};
 const COL={pb:"var(--pb)",fn:"var(--fn)",mi:"var(--mi)"};
 const ST={OK:["OK","var(--ok)","var(--ok-bg)"],"Atención":["Atención","var(--warn)","var(--warn-bg)"],Alerta:["Alerta","var(--bad)","var(--bad-bg)"]};
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
@@ -159,6 +161,27 @@ function render(d){
  </article>`}).join("");
  const vc=S.map(s=>`<tr><td>${s.n}</td><td>$${nf(s.ventas,1)} M</td><td>$${nf(s.compras,1)} M</td><td>${s.ventas?Math.round(s.compras/s.ventas*100)+"%":"—"}</td></tr>`).join("");
  const mp=S.map(s=>`<tr><td>${s.n}</td><td>$${nf(s.mp.cobrado,1)} M</td><td>${s.mp.facturado?Math.round(s.mp.cobrado/s.mp.facturado*100):0}%</td><td>${nf(s.mp.comisionPct,1)}%</td><td>$${nf(s.mp.pendiente,1)} M</td><td>${s.mp.dias?`<span class="st bad">Revisar ${s.mp.dias} ${s.mp.dias===1?"día":"días"}</span>`:`<span class="st ok">OK</span>`}</td></tr>`).join("");
+ const F=d.financiera;
+ let fin="";
+ if(F){
+  const con=F.locales.filter(l=>l.bruto>0), sin=F.locales.filter(l=>!(l.bruto>0)).map(l=>l.n);
+  const filasL=con.map(l=>`<tr><td><span style="display:inline-flex;align-items:center;gap:6px"><span class="dot" style="--c:${COL[l.id]||"var(--muted)"}"></span>${l.n}</span><div class="hint">${l.soc}</div></td><td>$${nf(l.bruto)} M</td><td>$${nf(l.fee)} M</td><td>$${nf(l.neto)} M</td><td>$${nf(l.acreditado)} M</td><td>$${nf(l.pendiente)} M</td></tr>`).join("")||`<tr><td colspan="6" class="hint">Todavía no hay cobros por posnet este mes.</td></tr>`;
+  const prox=F.proximos.length?F.proximos.map(p=>`<div class="it"><span class="date">${p.fecha}</span><span>A liquidar a los locales</span><b class="num">$${nf(p.total)} M</b>${p.hoy?'<span class="st warn">Hoy</span>':'<span></span>'}</div>`).join(""):'<p class="hint">No hay acreditaciones próximas.</p>';
+  const medios=F.medios.map(m=>`${m.n} <b class="num">$${nf(m.bruto,1)} M</b>`).join(" · ");
+  fin=`<section class="panel" aria-labelledby="h-fin"><div class="panel-h"><h2 id="h-fin">Posnet financiero</h2><span class="hint">Exenta de IVA · aparte de las 3 sociedades</span></div>
+  <div class="kpis">
+   <div class="kpi"><div class="lbl">Cobrado en posnet</div><div class="v num">$${nf(F.total.bruto)} M</div></div>
+   <div class="kpi"><div class="lbl">Fee de la financiera (8%)</div><div class="v num">$${nf(F.total.fee)} M</div></div>
+   <div class="kpi"><div class="lbl">Acreditado, a liquidar a locales</div><div class="v num">$${nf(F.total.acreditado)} M</div></div>
+   <div class="kpi"><div class="lbl">Pendiente de acreditar</div><div class="v num">$${nf(F.total.pendiente)} M</div></div>
+   <div class="kpi"><div class="lbl">Margen de la financiera</div><div class="v num">$${nf(F.margen.margen)} M</div><div class="hint">${F.margen.payway?`después de $${nf(F.margen.payway)} M de costos Payway`:"sin costos de Payway todavía"}</div></div>
+  </div>
+  <div class="split">
+   <div class="tbl"><table><thead><tr><th>Local</th><th>Cobrado</th><th>Fee</th><th>Neto al local</th><th>Acreditado</th><th>Pendiente</th></tr></thead><tbody>${filasL}</tbody></table>
+    <p class="hint" style="margin:10px 0 0">Por medio: ${medios}${sin.length?` · Sin posnet todavía: ${sin.join(", ")}`:""}</p></div>
+   <div><h3 style="font-size:14px;margin:0 0 4px">Próximas acreditaciones</h3><div class="list">${prox}</div></div>
+  </div></section>`;
+ }
  document.getElementById("main").innerHTML=`
  <section aria-labelledby="h-iva"><div class="panel-h"><h2 id="h-iva">IVA de cada sociedad</h2><span class="hint">Barra: proyección a fin de mes · marca: umbral de alerta</span></div><div class="grid3">${cards}</div></section>
  <section class="panel" aria-labelledby="h-evo"><div class="panel-h"><h2 id="h-evo">Evolución diaria del IVA</h2><span class="hint">Llena: acumulado al día · punteada: proyección · gris: umbral · debajo de cero: a favor</span></div><div class="charts">${S.map(s=>chart(s,d.diasMes)).join("")}</div></section>
@@ -167,7 +190,7 @@ function render(d){
    <div class="tbl"><table><thead><tr><th>Sociedad</th><th>Ventas</th><th>Compras</th><th>Compras/ventas</th></tr></thead><tbody>${vc}</tbody></table></div></section>
   <section class="panel" aria-labelledby="h-mp"><div class="panel-h"><h2 id="h-mp">Cobros Mercado Pago</h2><span class="hint">Cruce: cobrado vs. facturado por día</span></div>
    <div class="tbl"><table><thead><tr><th>Sociedad</th><th>Cobrado</th><th>% de lo facturado</th><th>Comisión</th><th>Por acreditar</th><th>Cruce</th></tr></thead><tbody>${mp}</tbody></table></div></section>
- </div>`;
+ </div>${fin}`;
 }
 async function cargar(mes,refrescar){
  if(demo){render(DEMO);return;}
