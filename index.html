@@ -32,10 +32,8 @@ h2{font-size:21px}
 .num{font-variant-numeric:tabular-nums}
 .top{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
 .sub{color:var(--muted);font-size:14px;margin:2px 0 0}
-.months{display:flex;gap:6px;flex-wrap:wrap}
-.months button{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer}
-.months button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--card)}
-.months button:focus-visible,.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.months{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:6px 32px 6px 12px;border-radius:999px;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 16px) 55%,calc(100% - 11px) 55%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+.months:focus-visible,.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--warn-bg);color:var(--warn)}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
 .panel-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
@@ -108,7 +106,7 @@ td+td{white-space:nowrap}
     <h1>Control del grupo Nuñez</h1>
     <p class="sub" id="sub">Cargando…</p>
   </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><div class="months" role="group" aria-label="Mes" id="months"></div><button type="button" class="refresh" id="actualizar" aria-label="Actualizar datos">↻ Actualizar</button></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><select class="months" aria-label="Mes" id="months"></select><button type="button" class="refresh" id="actualizar" aria-label="Actualizar datos">↻ Actualizar</button></div>
 </header>
 <main id="main" style="display:grid;gap:18px"><p class="state">Cargando datos…</p></main>
 <p class="foot">Fuentes: ARCA (Mis Comprobantes) y Mercado Pago (liquidaciones), cargadas por n8n en la planilla del mes; posnet Payway desde la planilla de la Financiera Nuñez. La proyección es lineal: lo acumulado ÷ días transcurridos × días del mes. <button type="button" class="ghost" id="salir">Salir</button></p>
@@ -148,8 +146,8 @@ function render(d){
  mesActual=d.mes;
  const act=new Date(d.actualizado);
  document.getElementById("sub").innerHTML=`Planeta Bodegón · Fábrica Nuñez · Milaburo &nbsp;·&nbsp; ${d.mesNombre}, día ${d.dia} de ${d.diasMes} &nbsp;·&nbsp; actualizado ${act.toLocaleString("es-AR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}${demo?' &nbsp;<span class="tag">Datos de ejemplo</span>':""}`;
- document.getElementById("months").innerHTML=d.meses.map(m=>`<button type="button" data-mes="${m.id}" aria-pressed="${m.id===d.mes}">${m.nombre[0].toUpperCase()+m.nombre.slice(1)}</button>`).join("");
- document.querySelectorAll("#months button").forEach(b=>b.addEventListener("click",()=>cargar(b.dataset.mes)));
+ document.getElementById("months").innerHTML=d.meses.slice().reverse().map(m=>`<option value="${m.id}"${m.id===d.mes?" selected":""}>${m.nombre[0].toUpperCase()+m.nombre.slice(1)}</option>`).join("");
+ document.getElementById("months").onchange=e=>cargar(e.target.value);
  const S=d.sociedades;
  const cards=S.map(s=>{const [e,st,bg]=ST[s.estado]||ST.OK; const max=Math.max(s.proj,s.umb,0.01)*1.15;
   return `<article class="soc" style="--st:${st};--stbg:${bg};--c:${COL[s.id]}">
